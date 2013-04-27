@@ -4,23 +4,27 @@
  */
 package ar.edu.untdf.testservices;
 
+import ar.edu.untdf.model.Money;
+import ar.edu.untdf.model.Usuario;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
 import java.lang.String;
 import java.util.Iterator;
-import java.util.Iterator;
+import java.util.List;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import net.sf.json.JSONArray;
+import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.Persistence;
+import javax.persistence.Query;
 import net.sf.json.JSONObject;
 import net.sf.json.JSONSerializer;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.client.HttpClient;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
-import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 
@@ -30,17 +34,13 @@ import org.apache.http.impl.client.DefaultHttpClient;
  */
 public class TestService {
 
-    /**
-     * @param args the command line arguments
-     */
-    public static void main(String[] args) throws IOException {
+    public static EntityManagerFactory f = Persistence.createEntityManagerFactory("money");
+
+    public static void loadMoney() {
         try {
 
-            //realiza una llamada al servicio y transforma el contenido
-            //de la respuesta en un string.
-            //para la llamada utiliza commons-http de apache y para la conversión
-            //utiliza commmons-io (la clase IOUtils)
-            String request = "http://openexchangerates.org/api/latest.json?app_id=25fb0f55591b47abb1b86d90926679a4";
+            EntityManager em = TestService.f.createEntityManager();
+            String request = "http://openexchangerates.org/currencies.json";
             HttpClient client = new DefaultHttpClient();
             HttpGet method = new HttpGet(request);
             HttpResponse response = client.execute(method);
@@ -50,34 +50,61 @@ public class TestService {
             IOUtils.copy(rstream, writer);
             String theString = writer.toString();
             JSONObject json = (JSONObject) JSONSerializer.toJSON(theString);
-            
+
             //busca todas las claves que tiene el objeto json
-            for (Iterator<String> i = json.keys(); i.hasNext();) {
-			String key = i.next();
-                        System.out.println(key);
-			
-		}
-            
+
+
             //imprime el cambio con respecto al dolar de todas las monedas
             //en el string json el cambio se encuentra con la clave "rates"
             //dentro de rates tiene un conjunto de claves, cada una corresponde
             //a una moneda, el valor de cada clae es el cambio
-            JSONObject a=json.getJSONObject("rates");             
+
             System.out.println("Cambio con respecto al dolar");
-            for (Iterator<String> i = a.keys(); i.hasNext();) {
-			String key = i.next();
-                        System.out.print("Moneda: "+key+"   Cambio: "+a.getString(key));
-                        System.out.println();
-                        
-                        
-			
-		}
-            
-            // JSONObject jo = new JSONObject(rstream);            
-            /*     String diclamer=json.getString("diclaimer");
-             System.out.println(diclamer);*/
-        } catch (ClientProtocolException ex) {
+            em.getTransaction().begin();
+            for (Iterator<String> i = json.keys(); i.hasNext();) {
+                String key = i.next();
+                Money m = new Money();
+                m.setSiglas(key);
+                m.setDescripcion(json.getString(key));
+                em.persist(m);
+            }
+            em.getTransaction().commit();
+            em.close();
+        } catch (IOException ex) {
             Logger.getLogger(TestService.class.getName()).log(Level.SEVERE, null, ex);
         }
+
+
+    }
+
+    /**
+     * @param args the command line arguments
+     */
+    public static void main(String[] args) {
+        // TestService.loadMoney();
+        EntityManager em = f.createEntityManager();
+
+        Query q = em.createQuery("Select m from Money m where m.siglas=:sigla");
+        q.setParameter("sigla", "LBP");
+        List<Money> monedas = q.getResultList();
+        Usuario u = new Usuario();
+        u.setNombre("heremias");
+        u.setPasswd("1234");
+        for (Money money : monedas) {
+            u.getMonedas().add(money);
+        }
+        em.persist(u);
+        //TestService.loadMoney();
+
+        
+         q=em.createQuery("Select u from Usuario u");
+         System.out.println(q.getResultList().size());
+      /*   List<Usuario> users = q.getResultList();
+         System.out.println(users.size());
+         for(Usuario u:users){
+         System.out.println(u.getNombre());
+         for(Money m:u.getMonedas())
+         System.out.println(m.getDescripcion());
+         }*/
     }
 }

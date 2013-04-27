@@ -1,0 +1,10 @@
+----------------------------------------------------------------
+Fri Apr 26 22:03:25 ART 2013:
+Booting Derby version The Apache Software Foundation - Apache Derby - 10.9.1.0 - (1344872): instance a816c00e-013e-4904-1883-0000074567b8 
+on database directory C:\Users\Martin\Documents\NetBeansProjects\exchangeRates\TestServices\money  with class loader sun.misc.Launcher$AppClassLoader@4de8b671 
+Loaded from file:/C:/Users/Martin/.m2/repository/org/apache/derby/derby/10.9.1.0/derby-10.9.1.0.jar
+java.vendor=Oracle Corporation
+java.runtime.version=1.7.0_06-b24
+user.dir=C:\Users\Martin\Documents\NetBeansProjects\exchangeRates\TestServices
+derby.system.home=null
+Database Class Loader started - derby.database.classpath=''
